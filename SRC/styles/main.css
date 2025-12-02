@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --deep-black: #0a0a0a;
+    --dark-black: #1a1a1a;
+    --royal-purple: #6b46c1;
+    --luxury-purple: #805ad5;
+    --electric-blue: #3182ce;
+    --premium-gold: #d4af37;
+    --platinum: #e2e8f0;
+    --crystal: rgba(255, 255, 255, 0.1);
+  }
+
+  body {
+    @apply bg-deep-black text-platinum font-sans;
+  }
+}
+
+@layer components {
+  .luxury-btn {
+    @apply px-6 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center gap-2;
+  }
+
+  .luxury-btn.primary {
+    @apply bg-gradient-to-r from-royal-purple to-electric-blue text-white hover:opacity-90 hover:scale-105;
+  }
+
+  .luxury-btn.secondary {
+    @apply bg-gradient-to-r from-premium-gold to-yellow-300 text-deep-black hover:opacity-90 hover:scale-105;
+  }
+
+  .luxury-btn.outline {
+    @apply border-2 border-electric-blue text-electric-blue hover:bg-electric-blue hover:text-white;
+  }
+
+  .stat-card {
+    @apply bg-gray-900/50 backdrop-blur-lg rounded-2xl p-6 border border-crystal hover:border-electric-blue transition-all;
+  }
+
+  .dashboard-hero {
+    @apply py-12 px-8 rounded-3xl bg-gradient-to-br from-gray-900/50 to-black/50 border border-crystal;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-platinum to-premium-gold bg-clip-text text-transparent;
+  }
+
+  .glass-effect {
+    @apply bg-white/5 backdrop-blur-lg border border-white/10;
+  }
+
+  .screen-transition {
+    @apply animate-fadeIn;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-deep-black;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gradient-to-b from-royal-purple to-electric-blue rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply opacity-80;
+}
