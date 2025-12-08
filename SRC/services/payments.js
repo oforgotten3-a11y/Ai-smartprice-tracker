@@ -61,3 +61,18 @@ export const getPaymentHistory = async () => {
     return { success: false, error: error.error || 'Failed to fetch payment history' };
   }
 };
+export const validatePromoCode = async (promoCode) => {
+  try {
+    return await api.get(`/donations/validate-promo/${promoCode}`);
+  } catch (error) {
+    return { success: false, error: error.error || 'Failed to validate promo code' };
+  }
+};
+
+export const usePromoCode = async (promoCode) => {
+  try {
+    return await api.post(`/donations/use-promo/${promoCode}`);
+  } catch (error) {
+    return { success: false, error: error.error || 'Failed to use promo code' };
+  }
+};
