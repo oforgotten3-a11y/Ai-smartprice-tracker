@@ -34,7 +34,7 @@ function Register({ addNotification }) {
     setValidatingPromo(true);
     try {
       // Call your backend to validate promo code
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/donations/validate-promo/${formData.promoCode}`);
+      const response = await fetch(`/api/donations/validate-promo/${formData.promoCode}`);
       const data = await response.json();
       
       if (data.valid) {
@@ -57,33 +57,17 @@ function Register({ addNotification }) {
     e.preventDefault();
     setLoading(true);
 
-    // If promo code is entered, mark it as used after successful registration
-    let usedPromoCode = null;
-    if (formData.promoCode && promoBenefits) {
-      usedPromoCode = formData.promoCode;
-    }
-
-    // Call your registration API with promo code
+    // Call registration API with promo code
     const result = await register(
       formData.username, 
       formData.email, 
       formData.password,
-      usedPromoCode
+      formData.promoCode || null
     );
     
     if (result.success) {
-      // If promo code was used, mark it as used in backend
-      if (usedPromoCode) {
-        try {
-          await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/donations/use-promo/${usedPromoCode}`, {
-            method: 'POST'
-          });
-        } catch (error) {
-          console.error('Failed to mark promo code as used:', error);
-        }
-      }
-      
-      addNotification('Welcome to luxury shopping! ' + (promoBenefits ? `Your ${promoBenefits.months > 0 ? 'free month' : 'discount'} has been applied.` : ''), 'success');
+      addNotification('Welcome to luxury shopping! ' + (result.appliedBenefits ? 
+        `Your ${result.appliedBenefits.months > 0 ? 'free month' : 'discount'} has been applied.` : ''), 'success');
       navigate('/dashboard');
     } else {
       addNotification(result.error || 'Registration failed', 'error');
