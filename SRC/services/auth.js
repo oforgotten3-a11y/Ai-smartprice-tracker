@@ -46,21 +46,33 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (username, email, password) => {
-    try {
-      const response = await api.post('/register', { username, email, password });
-      if (response.data.success) {
-        localStorage.setItem('authToken', response.data.token);
-        localStorage.setItem('userData', JSON.stringify(response.data.user));
-        setUser(response.data.user);
-        setIsAuthenticated(true);
-        return { success: true, data: response.data };
+  const register = async (username, email, password, promoCode = null) => {
+  try {
+    const response = await api.post('/register', { 
+      username, 
+      email, 
+      password,
+      promoCode // Add this parameter
+    });
+    
+    if (response.data.success) {
+      localStorage.setItem('authToken', response.data.token);
+      localStorage.setItem('userData', JSON.stringify(response.data.user));
+      setUser(response.data.user);
+      setIsAuthenticated(true);
+      
+      // If there was a promo code, apply benefits
+      if (promoCode && response.data.appliedBenefits) {
+        console.log('Promo benefits applied:', response.data.appliedBenefits);
       }
-      return { success: false, error: response.data.error };
-    } catch (error) {
-      return { success: false, error: 'Network error' };
+      
+      return { success: true, data: response.data };
     }
-  };
+    return { success: false, error: response.data.error };
+  } catch (error) {
+    return { success: false, error: 'Network error' };
+  }
+};
 
   const logout = () => {
     localStorage.removeItem('authToken');
