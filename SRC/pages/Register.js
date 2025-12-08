@@ -1,15 +1,19 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../services/auth';
-import { FiUser, FiMail, FiLock, FiArrowRight, FiStar } from 'react-icons/fi';
+import { FiUser, FiMail, FiLock, FiArrowRight, FiStar, FiGift } from 'react-icons/fi';
 
 function Register({ addNotification }) {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
-    password: ''
+    password: '',
+    promoCode: ''
   });
+  
   const [loading, setLoading] = useState(false);
+  const [validatingPromo, setValidatingPromo] = useState(false);
+  const [promoBenefits, setPromoBenefits] = useState(null);
   const { register } = useAuth();
   const navigate = useNavigate();
 
@@ -20,14 +24,66 @@ function Register({ addNotification }) {
     });
   };
 
+  // Validate promo code
+  const validatePromoCode = async () => {
+    if (!formData.promoCode.trim()) {
+      addNotification('Please enter a promo code', 'info');
+      return;
+    }
+
+    setValidatingPromo(true);
+    try {
+      // Call your backend to validate promo code
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/donations/validate-promo/${formData.promoCode}`);
+      const data = await response.json();
+      
+      if (data.valid) {
+        setPromoBenefits(data.benefits);
+        addNotification(`Promo code valid! Benefits: ${data.benefits.months > 0 ? 
+          `${data.benefits.months} month free ${data.benefits.plan} plan` : 
+          `${data.benefits.discount}% discount on ${data.benefits.plan} plan`}`, 'success');
+      } else {
+        setPromoBenefits(null);
+        addNotification(data.error || 'Invalid promo code', 'error');
+      }
+    } catch (error) {
+      addNotification('Failed to validate promo code', 'error');
+    } finally {
+      setValidatingPromo(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
-    const result = await register(formData.username, formData.email, formData.password);
+    // If promo code is entered, mark it as used after successful registration
+    let usedPromoCode = null;
+    if (formData.promoCode && promoBenefits) {
+      usedPromoCode = formData.promoCode;
+    }
+
+    // Call your registration API with promo code
+    const result = await register(
+      formData.username, 
+      formData.email, 
+      formData.password,
+      usedPromoCode
+    );
     
     if (result.success) {
-      addNotification('Welcome to luxury shopping!', 'success');
+      // If promo code was used, mark it as used in backend
+      if (usedPromoCode) {
+        try {
+          await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/donations/use-promo/${usedPromoCode}`, {
+            method: 'POST'
+          });
+        } catch (error) {
+          console.error('Failed to mark promo code as used:', error);
+        }
+      }
+      
+      addNotification('Welcome to luxury shopping! ' + (promoBenefits ? `Your ${promoBenefits.months > 0 ? 'free month' : 'discount'} has been applied.` : ''), 'success');
       navigate('/dashboard');
     } else {
       addNotification(result.error || 'Registration failed', 'error');
@@ -49,6 +105,21 @@ function Register({ addNotification }) {
             <h1 className="text-3xl font-bold gradient-text mb-2">Join the Elite</h1>
             <p className="text-gray-400">Begin your luxury shopping journey</p>
           </div>
+
+          {/* Promo Code Benefits Display */}
+          {promoBenefits && (
+            <div className="mb-6 p-4 bg-gradient-to-r from-premium-gold/10 to-yellow-300/10 rounded-xl border border-premium-gold/30">
+              <div className="flex items-center mb-2">
+                <FiGift className="text-premium-gold mr-2" />
+                <h3 className="font-semibold text-premium-gold">Promo Code Applied!</h3>
+              </div>
+              <p className="text-sm text-gray-300">
+                {promoBenefits.months > 0 ? 
+                  `You'll receive ${promoBenefits.months} month free ${promoBenefits.plan} plan` :
+                  `You'll receive ${promoBenefits.discount}% discount on ${promoBenefits.plan} plan`}
+              </p>
+            </div>
+          )}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -115,6 +186,39 @@ function Register({ addNotification }) {
               </p>
             </div>
 
+            {/* Promo Code Field */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-300">
+                  Promo Code (Optional)
+                </label>
+                <button
+                  type="button"
+                  onClick={validatePromoCode}
+                  disabled={!formData.promoCode.trim() || validatingPromo}
+                  className="text-xs text-premium-gold hover:text-yellow-300 transition-colors"
+                >
+                  {validatingPromo ? 'Validating...' : 'Validate Code'}
+                </button>
+              </div>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FiGift className="text-gray-500" />
+                </div>
+                <input
+                  type="text"
+                  name="promoCode"
+                  value={formData.promoCode}
+                  onChange={handleChange}
+                  className="w-full pl-10 pr-4 py-3 bg-gray-900/50 border border-crystal rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-premium-gold focus:border-transparent transition-all"
+                  placeholder="DONATE-XXXX-XXXXXX"
+                />
+              </div>
+              <p className="mt-2 text-xs text-gray-500">
+                Enter promo code from your donation to get discounts or free months
+              </p>
+            </div>
+
             <button
               type="submit"
               disabled={loading}
@@ -168,4 +272,4 @@ function Register({ addNotification }) {
   );
 }
 
-export default Register; 
+export default Register;
