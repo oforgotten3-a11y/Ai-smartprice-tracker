@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (username, email, password, promoCode = null) => {
+const register = async (username, email, password, promoCode = null) => {
   try {
     const response = await api.post('/register', { 
       username, 
@@ -61,16 +61,19 @@ export const AuthProvider = ({ children }) => {
       setUser(response.data.user);
       setIsAuthenticated(true);
       
-      // If there was a promo code, apply benefits
-      if (promoCode && response.data.appliedBenefits) {
-        console.log('Promo benefits applied:', response.data.appliedBenefits);
-      }
-      
-      return { success: true, data: response.data };
+      return { 
+        success: true, 
+        data: response.data,
+        appliedBenefits: response.data.appliedBenefits 
+      };
     }
     return { success: false, error: response.data.error };
   } catch (error) {
-    return { success: false, error: 'Network error' };
+    console.error('Registration error:', error);
+    return { 
+      success: false, 
+      error: error.response?.data?.error || 'Network error' 
+    };
   }
 };
 
